@@ -1,0 +1,30 @@
+{
+    "name": "eriktorsner/wp-checksum",
+    "description": "Check plugin and theme consistency",
+    "homepage": "https://github.com/eriktorsner/wp-checksum/",
+    "type": "library",
+    "keywords": [
+        "wordpress"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Erik Torsner",
+            "email": "erik@torgesta.com",
+            "role": "lead"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/eriktorsner/wp-checksum/issues"
+    },
+    "require": {
+        "php": ">=5.3.9",
+        "pimple/pimple": "~3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "WPChecksum\\": "src"
+        },
+        "files": ["wpcli.php"]
+    }
+}
