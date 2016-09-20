@@ -65,6 +65,9 @@ class BaseChecker
         } else {
             $url = sprintf($apiTemplate, $slug, $version);
             $out = wp_remote_get($url);
+            if (is_wp_error($out)) {
+                return null;
+            }
             if ($out['response']['code'] != 200) {
                 $out = null;
             } else {
