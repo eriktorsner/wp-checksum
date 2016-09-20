@@ -30,30 +30,30 @@ path: /path/to/my/wordpress/installation
 ## Running wp-checksum
 
 ### Syntax
-  wp checksum [<type>] [<slug>] [--format=<table|json|csv|yaml>] [--details]
+  wp checksum type slug --format=table|json|csv|yaml --details
 
 ### OPTIONS
-  - **<type>** Optional. What should we do checksums on? plugin|theme. Omit to check everything
-  - **<slug>** Optional. Name of a specific plugin or theme to check. Leave blank to check all installed
+  - **type** Optional. What should we do checksums on? plugin|theme. Omit to check everything
+  - **slug** Optional. Name of a specific plugin or theme to check. Leave blank to check all installed
   - **--format** Optional. How to format the output. Table (default), json, csv or yaml
   - **--details** Optional. Set this flag to output details about all modified/added/deleted files
 
 
 ```bash
-# Check themes and plugins
+# Check themes and plugins, format output as table (default(
 $ wp checksum theme
 ```
 ```bash
-# Only check themes
-$ wp checksum theme
+# Only check themes, format as json and include details
+$ wp checksum theme --format=json --details
 ```
 ```bash
-# Check a specific theme
-$ wp checksum theme twentysixteen
+# Check a specific theme, format as yaml and include details
+$ wp checksum theme twentysixteen --format=yaml --details
 ```
 ```bash
-# Only check plugins
-$ wp checksum plugin
+# Only check plugins, omit all output except the actual data table
+$ wp checksum plugin --quiet
 ```
 ```bash
 # Check a specific plugin
@@ -66,11 +66,7 @@ By default, wp-checksum will output a table with information with the number of 
 In this example, there are two premium plugins and two plugins from the repository. The premium plugins can't be checked. One of the checked plugins has issues, the other one is fine:
 
 ```bash
-$ wp checksum plugin
-Checking plugin homepage-control
-Checking plugin storefront-designer
-Checking plugin storefront-woocommerce-customiser
-Checking plugin wp-cfm
+$ wp checksum plugin --quiet
 +--------+-----------------------------------+-----------+---------+------------------+--------+
 | Type   | Slug                              | Status    | Version | Result           | Issues |
 +--------+-----------------------------------+-----------+---------+------------------+--------+
@@ -82,6 +78,16 @@ Checking plugin wp-cfm
 ```
 
 To get more details, the --details switch can be used:
-
+```bash
+$ wp checksum plugin --quiet --details
++--------+-----------------------------------+-----------+---------+------------------+--------+
+| Type   | Slug                              | Status    | Version | Result           | Issues |
++--------+-----------------------------------+-----------+---------+------------------+--------+
+| plugin | homepage-control                  | Checked   | 2.0.2   | Changes detected | {"index.php":"MODIFIED","warez_virus.php":"ADDED"}      |
+| plugin | storefront-designer               | Unchecked | 1.8.4   |                  |        |
+| plugin | storefront-woocommerce-customiser | Unchecked | 1.9.1   |                  |        |
+| plugin | wp-cfm                            | Checked   | 1.4.5   | Ok               | 0      |
++--------+-----------------------------------+-----------+---------+------------------+--------+
+```
 
 
