@@ -140,5 +140,6 @@ checksum:
 ```  
 ### Backend and local cacheing
 
-By default, wp-checksum uses an external API for fetching the original checksums for each theme and plugin. This can be  
+By default, wp-checksum uses an external API for fetching the original checksums for each theme and plugin. This behaviour can be overridden by specifying the flag --localcache. However, this is not fully implemented in the current version (0.1.1) but the code is there for anyone that want to take a look.
 
+The code for the external API will be published on Github shortly. It's based on the slim framework but uses the same classes as this repo for retreiving zip-files and calculating checksums etc.
