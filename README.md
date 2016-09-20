@@ -80,14 +80,65 @@ $ wp checksum plugin --quiet
 To get more details, the --details switch can be used:
 ```bash
 $ wp checksum plugin --quiet --details
-+--------+-----------------------------------+-----------+---------+------------------+--------+
-| Type   | Slug                              | Status    | Version | Result           | Issues |
-+--------+-----------------------------------+-----------+---------+------------------+--------+
-| plugin | homepage-control                  | Checked   | 2.0.2   | Changes detected | {"index.php":"MODIFIED","warez_virus.php":"ADDED"}      |
-| plugin | storefront-designer               | Unchecked | 1.8.4   |                  |        |
-| plugin | storefront-woocommerce-customiser | Unchecked | 1.9.1   |                  |        |
-| plugin | wp-cfm                            | Checked   | 1.4.5   | Ok               | 0      |
-+--------+-----------------------------------+-----------+---------+------------------+--------+
++--------+-----------------------------------+-----------+---------+------------------+----------------------------------------------------+
+| Type   | Slug                              | Status    | Version | Result           | Issues                                             |
++--------+-----------------------------------+-----------+---------+------------------+----------------------------------------------------+
+| plugin | homepage-control                  | Checked   | 2.0.2   | Changes detected | {"index.php":"MODIFIED","warez_virus.php":"ADDED"} |
+| plugin | storefront-designer               | Unchecked | 1.8.4   |                  |                                                    |
+| plugin | storefront-woocommerce-customiser | Unchecked | 1.9.1   |                  |                                                    |
+| plugin | wp-cfm                            | Checked   | 1.4.5   | Ok               |                                                    |
++--------+-----------------------------------+-----------+---------+------------------+----------------------------------------------------+
 ```
 
+Naturally, getting detailed output makes a whole lot more sense when using yaml, or json:
+
+```json
+[{
+	"Type": "plugin",
+	"Slug": "homepage-control",
+	"Status": "Checked",
+	"Version": "2.0.2",
+	"Result": "Changes detected",
+	"Issues": {
+		"index.php": "MODIFIED",
+		"warez_virus.php": "ADDED"
+	}
+}, {
+	"Type": "plugin",
+	"Slug": "storefront-designer",
+	"Status": "Unchecked",
+	"Version": "1.8.4",
+	"Result": null,
+	"Issues": null
+}, {
+	"Type": "plugin",
+	"Slug": "storefront-woocommerce-customiser",
+	"Status": "Unchecked",
+	"Version": "1.9.1",
+	"Result": null,
+	"Issues": null
+}, {
+	"Type": "plugin",
+	"Slug": "wp-cfm",
+	"Status": "Checked",
+	"Version": "1.4.5",
+	"Result": "Ok",
+	"Issues": null
+}]
+```
+## Parameters in wp-cli.yml
+
+Default values for parameters **details** and **format** can be entered into the wp-cli.yml file. Add a section named checksum: 
+
+```yaml
+
+checksum:
+  details: yes
+  format: json
+  
+
+```  
+### Backend and local cacheing
+
+By default, wp-checksum uses an external API for fetching the original checksums for each theme and plugin. This can be  
 
