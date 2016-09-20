@@ -19,6 +19,7 @@ class PluginChecker extends BaseChecker
         $ret = array();
         $ret['type'] = 'plugin';
         $ret['slug'] = $slug;
+        $ret['version'] = $plugin['Version'];
 
         $original = $this->getOriginalChecksums('plugin', $slug, $plugin['Version']);
         if ($original) {

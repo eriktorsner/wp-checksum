@@ -12,13 +12,14 @@ class ThemeChecker extends BaseChecker
         parent::__construct();
     }
 
-    public function check($slug, $plugin)
+    public function check($slug, $theme)
     {
         $ret = array();
         $ret['type'] = 'theme';
         $ret['slug'] = $slug;
+        $ret['version'] = $theme['Version'];
 
-        $original = $this->getOriginalChecksums('theme', $slug, $plugin['Version']);
+        $original = $this->getOriginalChecksums('theme', $slug, $theme['Version']);
         if ($original) {
             $local = $this->getLocalChecksums($this->basePath . "/$slug");
             $changeSet = $this->getChangeSet($original, $local);
