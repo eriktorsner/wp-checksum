@@ -144,6 +144,7 @@ class Checksum
             $row = array();
             $row['Type'] = $data['type'];
             $row['Slug'] = $data['slug'];
+            $row['Version'] = $data['version'];
             $row['Status'] = ucfirst($data['status']);
             if ($data['status'] == 'checked') {
                 if (count($data['changeset']) == 0) {
@@ -163,7 +164,7 @@ class Checksum
             $out[] = $row;
         }
 
-        \WP_CLI\Utils\format_items($format, $out, 'Type, Slug, Status, Result, Issues');
+        \WP_CLI\Utils\format_items($format, $out, 'Type, Slug, Status, Version, Result, Issues');
     }
 
     private function outputSummaryResults($data, $format)
@@ -173,6 +174,7 @@ class Checksum
             $row = array();
             $row['Type'] = $data['type'];
             $row['Slug'] = $data['slug'];
+            $row['Version'] = $data['version'];
             $row['Status'] = ucfirst($data['status']);
             if ($data['status'] == 'checked') {
                 $row['Result'] = count($data['changeset']) == 0? 'Ok': 'Changes detected';
@@ -185,7 +187,7 @@ class Checksum
             $out[] = $row;
         }
 
-        \WP_CLI\Utils\format_items($format, $out, 'Type, Slug, Status, Result, Issues');
+        \WP_CLI\Utils\format_items($format, $out, 'Type, Slug, Status, Version, Result, Issues');
     }
 
     private function parseArgs($args, $assocArgs)
