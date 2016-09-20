@@ -4,10 +4,10 @@ namespace WPChecksum;
 class BaseChecker
 {
     const PLUGIN_URL_TEMPLATE = "https://downloads.wordpress.org/plugin/%s.%s.zip";
-    const THEME_URL_TEMPLATE = "https://downloads.wordpress.org/theme/%s.%s.zip";
+    const THEME_URL_TEMPLATE  = "https://downloads.wordpress.org/theme/%s.%s.zip";
 
-    const API_PLUGIN_URL_TEMPLATE = "http://api.wpessentials.io/v1/plugin/%s/%s";
-    const API_THEME_URL_TEMPLATE = "http://api.wpessentials.io/v1/theme/%s/%s";
+    const API_PLUGIN_URL_TEMPLATE = "http://api.wpessentials.io/v1/checksum/plugin/%s/%s";
+    const API_THEME_URL_TEMPLATE  = "http://api.wpessentials.io/v1/checksum/theme/%s/%s";
 
     /**
      * @var string
