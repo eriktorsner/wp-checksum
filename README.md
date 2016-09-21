@@ -41,7 +41,7 @@ path: /path/to/my/wordpress/installation
 
 ```bash
 # Check themes and plugins, format output as table (default(
-$ wp checksum theme
+$ wp checksum
 ```
 ```bash
 # Only check themes, format as json and include details
