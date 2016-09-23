@@ -28,16 +28,12 @@ class BaseChecker
 
     public function getLocalChecksums($path, $base = '')
     {
-        $fileName = wp_tempnam();
-        $fileHandle = fopen($fileName, 'w');
         if (!$base) {
             $base = $this->basePath;
         }
-        $this->recScandir($path, $fileHandle, $path);
-        fclose($fileHandle);
+        $checkSummer = new FolderChecksum($path);
+        $out = $checkSummer->scan();
 
-        $out =  $this->flatToJson(file_get_contents($fileName));
-        unlink($fileName);
         return $out;
     }
 
