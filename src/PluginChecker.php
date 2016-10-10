@@ -1,9 +1,17 @@
 <?php
 namespace WPChecksum;
 
+/**
+ * Class PluginChecker
+ * @package WPChecksum
+ */
 class PluginChecker extends BaseChecker
 {
 
+    /**
+     * PluginChecker constructor.
+     * @param bool $localCache
+     */
     public function __construct($localCache = false)
     {
         $this->basePath = WP_PLUGIN_DIR;
@@ -12,6 +20,13 @@ class PluginChecker extends BaseChecker
         parent::__construct();
     }
 
+    /**
+     * Check a single plugin
+     *
+     * @param $id
+     * @param $plugin
+     * @return array
+     */
     public function check($id, $plugin)
     {
         $parts = explode('/', $id);
