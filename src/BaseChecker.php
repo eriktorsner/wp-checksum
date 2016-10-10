@@ -6,9 +6,6 @@ class BaseChecker
     const PLUGIN_URL_TEMPLATE = "https://downloads.wordpress.org/plugin/%s.%s.zip";
     const THEME_URL_TEMPLATE  = "https://downloads.wordpress.org/theme/%s.%s.zip";
 
-    const API_PLUGIN_URL_TEMPLATE = "http://api.wpessentials.io/v1/checksum/plugin/%s/%s";
-    const API_THEME_URL_TEMPLATE  = "http://api.wpessentials.io/v1/checksum/theme/%s/%s";
-
     /**
      * @var string
      */
@@ -26,57 +23,63 @@ class BaseChecker
     {
     }
 
-    public function getLocalChecksums($path, $base = '')
+    /**
+     * Read local checksums
+     *
+     * @param $path
+     * @return \stdClass
+     */
+    public function getLocalChecksums($path)
     {
-        if (!$base) {
-            $base = $this->basePath;
-        }
         $checkSummer = new FolderChecksum($path);
         $out = $checkSummer->scan();
 
         return $out;
     }
 
-    public function getOriginalChecksums($type, $slug, $version, $locale = '')
+    /**
+     * Read original checksums from the API
+     *
+     * @param string $type
+     * @param string $slug
+     * @param string $version
+     *
+     * @return array|mixed|null|object|\stdClass|\WP_Error
+     */
+    public function getOriginalChecksums($type, $slug, $version)
     {
         $out = null;
-        switch ($type) {
-            case 'plugin':
-                $localTemplate = self::PLUGIN_URL_TEMPLATE;
-                $apiTemplate = self::API_PLUGIN_URL_TEMPLATE;
-                break;
-            case 'theme':
-                $localTemplate = self::THEME_URL_TEMPLATE;
-                $apiTemplate = self::API_THEME_URL_TEMPLATE;
-                break;
-        }
 
         if ($this->localCache) {
+            switch ($type) {
+                case 'plugin':
+                    $localTemplate = self::PLUGIN_URL_TEMPLATE;
+                    break;
+                case 'theme':
+                    $localTemplate = self::THEME_URL_TEMPLATE;
+                    break;
+            }
+
             $url = sprintf($localTemplate, $slug, $version);
             $ret = $this->downloadZip($url);
             if ($ret) {
                 $path = $ret . "/$slug";
-                $out = $this->getLocalChecksums($path, $ret);
+                $out = $this->getLocalChecksums($path);
             }
         } else {
-            $url = sprintf($apiTemplate, $slug, $version);
-            $out = wp_remote_get($url);
-            if (is_wp_error($out)) {
-                return null;
-            }
-            if ($out['response']['code'] != 200) {
-                $out = null;
-            } else {
-                $out = json_decode($out['body']);
-                if (isset($out->checksums)) {
-                    $out->checksums = (array)$out->checksums;
-                }
-            }
+            $client = new ApiClient();
+            $out = $client->getChecksums($type, $slug, $version);
         }
-
         return $out;
     }
 
+    /**
+     * Calculate changes between local and orignial
+     *
+     * @param $original
+     * @param $local
+     * @return array
+     */
     public function getChangeSet($original, $local)
     {
         $changeSet = array();
@@ -105,69 +108,12 @@ class BaseChecker
         return $changeSet;
     }
 
-    private function flatToJson($flat)
-    {
-        $out = new \stdClass();
-        $checksums = array();
-        $rows = explode("\n", $flat);
-        foreach($rows as $row) {
-            if (trim($row) == '') {
-                continue;
-            }
-
-            $cols = explode("\t", trim($row));
-            // Skip directories
-            if ($cols[4] == '1' || count($cols) == 1) {
-                continue;
-            }
-
-            $obj = new \stdClass();
-            $obj->hash = $cols[3];
-            $checksums[$cols[0]] = $obj;
-        }
-
-        $out->checksums = $checksums;
-        return $out;
-    }
-
-    private function recScandir($dir, $f, $base)
-    {
-        $dir = rtrim($dir, '/');
-        $root = scandir($dir);
-        foreach ($root as $value) {
-            if ($value === '.' || $value === '..') {
-                continue;
-            }
-            /*if ($this->fnInArray("$dir/$value", $this->ignore)) {
-                continue;
-            }*/
-            if (is_file("$dir/$value")) {
-                $this->fileInfo2File($f, "$dir/$value", $base);
-                continue;
-            }
-            $this->fileInfo2File($f, "$dir/$value", $base);
-            $this->recScandir("$dir/$value", $f, $base);
-        }
-    }
-
-    private function fileInfo2File($f, $file, $base)
-    {
-        $stat = stat($file);
-        $sum = md5_file($file);
-        $base = rtrim($base, '/') . '/';
-        $relfile = substr($file, strlen($base));
-        $row =  array(
-            $relfile,
-            is_dir($file) ? 0 : $stat['mtime'],
-            is_dir($file) ? 0 : $stat['size'],
-            is_dir($file) ? 0 : $sum,
-            (int) is_dir($file),
-            (int) is_file($file),
-            (int) is_link($file),
-        );
-        fwrite($f, join("\t", $row) . "\n");
-    }
-
+    /**
+     * Download and unpack zip file
+     *
+     * @param $url
+     * @return null|string
+     */
     private function downloadZip($url)
     {
         $response = wp_remote_get($url);
@@ -188,18 +134,5 @@ class BaseChecker
 
         return $folderName;
 
-    }
-
-    private function fnInArray($needle, $haystack)
-    {
-        # this function allows wildcards in the array to be searched
-        $needle = substr($needle, strlen($this->basePath));#
-        foreach ($haystack as $value) {
-            if (true === fnmatch($value, $needle)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }
