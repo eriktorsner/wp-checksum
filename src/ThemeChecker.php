@@ -1,9 +1,17 @@
 <?php
 namespace WPChecksum;
 
+/**
+ * Class ThemeChecker
+ * @package WPChecksum
+ */
 class ThemeChecker extends BaseChecker
 {
 
+    /**
+     * ThemeChecker constructor.
+     * @param bool $localCache
+     */
     public function __construct($localCache = false)
     {
         $this->basePath = get_theme_root();
@@ -12,6 +20,13 @@ class ThemeChecker extends BaseChecker
         parent::__construct();
     }
 
+    /**
+     * Check a single Theme
+     *
+     * @param $slug
+     * @param $theme
+     * @return array
+     */
     public function check($slug, $theme)
     {
         $ret = array();
