@@ -2,7 +2,7 @@
     "name": "eriktorsner/wp-checksum",
     "description": "Check plugin and theme consistency",
     "homepage": "https://github.com/eriktorsner/wp-checksum/",
-    "type": "library",
+    "type": "wp-cli-package",
     "keywords": [
         "wordpress"
     ],
