@@ -15,8 +15,8 @@ class ParametersProvider implements ServiceProviderInterface
             return $this;
         };
 
-        //$pimple['apiBaseUrl'] = 'https://api.wpessentials.io/v1';
-        $pimple['apiBaseUrl'] = 'http://api.wpessentials.local/v1';
+        $pimple['apiBaseUrl'] = 'https://api.wpessentials.io/v1';
+        //$pimple['apiBaseUrl'] = 'http://api.wpessentials.local/v1';
     }
 
     public function log($message)
