@@ -10,6 +10,8 @@ class PluginChecker extends BaseChecker
 
     /**
      * PluginChecker constructor.
+     *
+     * @param object $apiClient
      * @param bool $localCache
      */
     public function __construct($apiClient, $localCache = false)

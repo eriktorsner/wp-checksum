@@ -10,6 +10,8 @@ class ThemeChecker extends BaseChecker
 
     /**
      * ThemeChecker constructor.
+     *
+     * @param object $apiClient
      * @param bool $localCache
      */
     public function __construct($apiClient, $localCache = false)

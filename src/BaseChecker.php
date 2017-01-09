@@ -1,6 +1,10 @@
 <?php
 namespace WPChecksum;
 
+/**
+ * Class BaseChecker
+ * @package WPChecksum
+ */
 class BaseChecker
 {
     const PLUGIN_URL_TEMPLATE = "https://downloads.wordpress.org/plugin/%s.%s.zip";
@@ -93,8 +97,8 @@ class BaseChecker
      * Compare the original set of files/checksums to the local
      * set.
      *
-     * @param array $original
-     * @param array $local
+     * @param \stdClass $original
+     * @param \stdClass $local
      *
      * @return array A set of changed files
      */

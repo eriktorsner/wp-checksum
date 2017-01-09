@@ -18,7 +18,7 @@ class Checksum
     private $logger;
 
     /**
-     * Internal object to retreive settings
+     * Internal object to retrieve settings
      * @var object
      */
     private $settings;
@@ -304,27 +304,6 @@ class Checksum
             case 'theme':
                 array_shift($args);
                 $out = $this->checkThemes($args);
-                break;
-
-            case 'quota':
-                $apiClient = new ApiClient();
-                $out = $apiClient->getQuota();
-                if ($out) {
-                    $ret = array((array)$out);
-                    $ret[0]['status'] = $ret[0]['validationStatus'];
-                    $this->logger->formatItems($format, $ret, 'limit, current, resetIn, status, email');
-                }
-                return;
-                break;
-
-            case 'apikey':
-
-
-
-            case 'register':
-                $apiClient = new ApiClient();
-                $out = $apiClient->getQuota();
-                return;
                 break;
         }
 
