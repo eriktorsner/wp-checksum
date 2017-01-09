@@ -12,12 +12,15 @@ class PluginChecker extends BaseChecker
      * PluginChecker constructor.
      * @param bool $localCache
      */
-    public function __construct($localCache = false)
+    public function __construct($apiClient, $localCache = false)
     {
         $this->basePath = WP_PLUGIN_DIR;
-        $this->localCache = $localCache;
 
-        parent::__construct();
+		$this->softIssues = array(
+			'readme.txt' => '*',
+		);
+
+        parent::__construct($apiClient, $localCache);
     }
 
     /**
@@ -34,6 +37,7 @@ class PluginChecker extends BaseChecker
         $ret = array();
         $ret['type'] = 'plugin';
         $ret['slug'] = $slug;
+        $ret['name'] = $plugin['Name'];
         $ret['version'] = $plugin['Version'];
 
         $original = $this->getOriginalChecksums('plugin', $slug, $plugin['Version']);
