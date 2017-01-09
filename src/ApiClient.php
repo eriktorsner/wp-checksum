@@ -3,17 +3,34 @@ namespace WPChecksum;
 
 class ApiClient
 {
-    /**
-     * Log object
-     *
-     * @var mixed
-     */
-    private $logger;
+    const NO_APIKEY = 1;
+    const INVALID_APIKEY = 2;
+    const RATE_LIMIT_EXCEEDED = 3;
+    const RESOURCE_NOT_FOUND = 4;
+    const INVALID_EMAIL = 5;
+    const EMAIL_IN_USE = 6;
 
     /**
      * @var string
      */
     private $baseUrl;
+
+    /**
+     * @var object
+     */
+    private $lastError;
+
+    /**
+     * Internal log object
+     * @var object
+     */
+    private $logger;
+
+    /**
+     * Internal object to retreive settings
+     * @var object
+     */
+    private $settings;
 
     /**
      * ApiClient constructor.
@@ -23,34 +40,39 @@ class ApiClient
         $app = Checksum::getApplication();
         $this->logger = $app['logger'];
         $this->baseUrl = $app['apiBaseUrl'];
+        $this->settings = $app['settingsParser'];
     }
 
     /**
      * Get api rate limit quota for the current user
      *
+     * @param string|null $apiKey
+     *
      * @return null|object
      */
-    public function getQuota()
+    public function getQuota($apiKey = null)
     {
-        $apiKey = $this->getApiKey();
+        $this->lastError = 0;
         if (!$apiKey) {
-            $this->logger->logError("No api key exists or can be created");
-            return null;
+            $apiKey = $this->getApiKey();
+        }
+
+        if (!$apiKey) {
+            $this->lastError = self::NO_APIKEY;
         }
 
         $url = join('/', array($this->baseUrl, 'quota'));
         $args = array('headers' => array('Authorization' => $apiKey));
         $ret = wp_remote_get($url, $args);
-        $out = null;
 
         if (is_wp_error($ret)) {
-            return $out;
+            return $ret;
         }
 
         switch ($ret['response']['code']) {
             case 401:
-                $out = null;
-                $this->logger->logError('Invalid api key');
+                $this->lastError = self::INVALID_APIKEY;
+                $out = new \WP_Error(self::INVALID_APIKEY, 'Invalid API key');
                 break;
             case 200:
                 $out = json_decode($ret['body']);
@@ -61,6 +83,82 @@ class ApiClient
 
     }
 
+    /**
+     * Verify that an Apikey is valid
+     *
+     * @param string $apiKey
+     *
+     * @return object|\WP_Error
+     */
+    public function verifyApiKey($apiKey)
+    {
+        $ret = $this->getQuota($apiKey);
+        if ($this->lastError === 0) {
+            update_option('wp_checksum_apikey', $apiKey);
+            $ret->message = __('API key updated', 'integrity-checker');
+            return $ret;
+        } else {
+            return new \WP_Error(
+                400,
+                __('API key verification failed. Key not updated', 'integrity-checker')
+            );
+        }
+    }
+
+    /**
+     * Register email address with backend
+     * (increases quota)
+     *
+     * @param string $email
+     *
+     * @return object|\WP_Error
+     */
+    public function registerEmail($email)
+    {
+        $this->lastError = 0;
+        $apiKey = $this->getApiKey();
+        if (!$apiKey) {
+            $this->lastError = self::NO_APIKEY;
+            return  new \WP_Error(self::NO_APIKEY, 'No API key');
+        }
+
+        $url = join('/', array($this->baseUrl, 'userdata'));
+        $args = array(
+            'headers' => array('Authorization' => $apiKey, 'Content-Type' => 'application/json'),
+            'body' => json_encode(array(
+                'email' => $email,
+                'host' => get_site_url(),
+            )),
+        );
+        $out = wp_remote_post($url, $args);
+
+        if (is_wp_error($out)) {
+            return $out;
+        }
+
+        switch ($out['response']['code']) {
+            case 400:
+                $this->lastError = self::INVALID_EMAIL;
+                $out = new \WP_Error(self::INVALID_EMAIL, 'Invalid email format or domain');
+                break;
+            case 401:
+                $this->lastError = self::INVALID_APIKEY;
+                $out = new \WP_Error(self::INVALID_APIKEY, 'Invalid API key');
+                break;
+            case 422:
+                $this->lastError = self::EMAIL_IN_USE;
+                $out = new \WP_Error(self::EMAIL_IN_USE, 'Email address already in use');
+                break;
+            case 200:
+                $out = json_decode($out['body']);
+                break;
+        }
+
+
+
+        return $out;
+
+    }
 
     /**
      * @param $type
@@ -70,6 +168,7 @@ class ApiClient
      */
     public function getChecksums($type, $slug, $version)
     {
+        $this->lastError = 0;
         $apiKey = $this->getApiKey();
         if (!$apiKey) {
             $this->logger->logError("No api key exists or can be created");
@@ -117,11 +216,18 @@ class ApiClient
      */
     private function getApiKey()
     {
-        // Did we get a key via settings?
-        $app = Checksum::getApplication();
-        if (isset($app->apikey)) {
-            return $app->apikey;
+        // Did we get a key via settings (command line or yml file)?
+        $apiKey = $this->settings->getSetting('apikey', 'string', false);
+        if ($apiKey) {
+            return $apiKey;
         }
+
+        // no? Do we have an environment variable?
+        $apiKey = getenv('WP_CHKSM_APIKEY');
+        if ($apiKey) {
+            return $apiKey;
+        }
+
 
         // perhaps this WP installation has a key?
         $apiKey = get_option('wp_checksum_apikey', false);
