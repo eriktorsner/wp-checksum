@@ -23,6 +23,13 @@ class Checksum
      */
     private $settings;
 
+
+	/**
+	 * One global client
+	 * @var ApiClient
+	 */
+	private $apiClient;
+
     /**
      * @return \Pimple\Container
      */
@@ -44,50 +51,235 @@ class Checksum
         self::$application = $application;
     }
 
+
     /**
-     * Checksum
+     * Verify integrity of plugins and themes by comparing file checksums
      *
      * ## OPTIONS
-     *
-     * [<type>]
-     * : What should we do report on? plugin|theme|quota. Omit to check everything
-     * use quota to see API rate limits for current api key
-     *
-     * [<slug>]
-     * : Name of a specific plugin or theme to check. Leave blank to check all installed
      *
      * [--format=<table|json|csv|yaml>]
      * : Output format
      *
      * [--details]
-     * : Set this to output a detailed changeset insetad of a summary
+     * : Set this to output a detailed change set instead of a summary
      *
-     * [--localcache]
-     * : Set this to force use of local checksums for origial or use remote service. Defaults to false/not set
-     * ---q
-     * default: false
-     * options:
-     *   - true
-     *   - false
-     * ---
+     * [--apikey]
+     * : Specify the api key to use. The api key will be read from (in priority):
+     *   1. Command line arguments
+     *   2. The wp-cli.yml file
+     *   3. Environment variable WP_CHKSM_APIKEY
+     *   4. Local WordPress options table
      *
      * @param $args
      * @param $assocArgs
      *
      */
-    public function __invoke($args, $assocArgs)
+    public function checkAll($args, $assocArgs)
+    {
+        $this->check('all', $args, $assocArgs);
+    }
+
+    /**
+     * Verify integrity of all plugins by comparing file checksums
+     *
+     * ## OPTIONS
+     *
+     * [--format=<table|json|csv|yaml>]
+     * : Output format
+     *
+     * [--details]
+     * : Set this to output a detailed change set instead of a summary
+     *
+     * [--apikey]
+     * : Specify the api key to use. The api key will be read from (in priority):
+     *   1. Command line arguments
+     *   2. The wp-cli.yml file
+     *   3. Environment variable WP_CHKSM_APIKEY
+     *   4. Local WordPress options table
+     *
+     * @param $args
+     * @param $assocArgs
+     *
+     */
+    public function checkPlugin($args, $assocArgs)
+    {
+        $this->check('plugin', $args, $assocArgs);
+    }
+
+    /**
+     * Verify integrity of all themes by comparing file checksums
+     *
+     * ## OPTIONS
+     *
+     * [--format=<table|json|csv|yaml>]
+     * : Output format
+     *
+     * [--details]
+     * : Set this to output a detailed change set instead of a summary
+     *
+     * [--apikey]
+     * : Specify the api key to use. The api key will be read from (in priority):
+     *   1. Command line arguments
+     *   2. The wp-cli.yml file
+     *   3. Environment variable WP_CHKSM_APIKEY
+     *   4. Local WordPress options table
+     *
+     * @param $args
+     * @param $assocArgs
+     *
+     */
+    public function checkTheme($args, $assocArgs)
+    {
+        $this->check('theme', $args, $assocArgs);
+    }
+
+    /**
+     * Print API rate limits for current api key
+     *
+     * ## OPTIONS
+     *
+     * [--format=<table|json|csv|yaml>]
+     * : Output format
+     *
+     * [--apikey]
+     * : Specify the api key to use. The api key will be read from (in priority):
+     *   1. Command line arguments
+     *   2. The wp-cli.yml file
+     *   3. Environment variable WP_CHKSM_APIKEY
+     *   4. Local WordPress options table
+     *
+     * @param $args
+     * @param $assocArgs
+     *
+     */
+    public function quota($args, $assocArgs)
     {
         $app = self::getApplication();
         $this->logger = $app['logger'];
         $this->settings = $app['settingsParser'];
 
-        $type = 'all';
-        if (count($args) > 0) {
-            $type = $args[0];
-            if (!in_array($type, array('plugin', 'theme', 'quota'))) {
-                $this->logger->logError('Invalid type specified. Use one of plugin|theme or quota');
-            }
+        $format = $this->settings->getSetting('format', 'string', 'table');
+        if (!in_array($format, array('table', 'json', 'csv', 'yaml'))) {
+            $this->logger->logError('Invalid format specified. Use one of table|json|csv|yaml');
         }
+
+        $apiClient = new ApiClient();
+        $out = $apiClient->getQuota();
+        if (!is_wp_error($out)) {
+            $ret = array((array)$out);
+            $ret[0]['status'] = $ret[0]['validationStatus'];
+            $this->logger->formatItems($format, $ret, 'limit, current, resetIn, status, email');
+        } else {
+            $this->logger->logError($out->get_error_message());
+        }
+    }
+
+    /**
+     * Get or set the api key stored in WordPress options table
+     *
+     * ## OPTIONS
+     *
+     * <action>
+     * : get or set
+     *
+     * [<apikey>]
+     * : The new api key value, mandatory when action=set
+     *
+     * @param $args
+     * @param $assocArgs
+     */
+    public function apikey($args, $assocArgs)
+    {
+        $app = self::getApplication();
+        $this->logger = $app['logger'];
+        $this->settings = $app['settingsParser'];
+
+        switch ($args[0]) {
+            case 'get':
+                $apiKey = get_option('wp_checksum_apikey', false);
+                if ($apiKey ) {
+                    $this->logger->log($apiKey);
+                } else {
+                    $this->logger->log('No API key stored in WordPress. An anonymous key will be generated');
+                    $this->logger->log('the first time wp-checksum is used. Or you can specify a key using');
+                    $this->logger->log('wp checksum apikey set');
+                }
+                break;
+            case 'set';
+                if (count($args) != 2) {
+                    $this->logger->logError('Usage: wp checksum apikey set <apikey>');
+                }
+                $newKey = $args[1];
+                $apiClient = new ApiClient();
+                $result = $apiClient->verifyApiKey($newKey);
+                if (is_wp_error($result)) {
+                    $this->logger->logError($result->get_error_message());
+                } else {
+                    $this->logger->log('New api key stored!');
+                }
+                break;
+        }
+    }
+
+    /**
+     * Register email address for the current api key to increase hourly quota.
+     *
+     * ## OPTIONS
+     *
+     * <email>
+     * : Email address
+     *
+     * [--apikey]
+     * : Specify the api key to use. The api key will be read from (in priority):
+     *   1. Command line arguments
+     *   2. The wp-cli.yml file
+     *   3. Environment variable WP_CHKSM_APIKEY
+     *   4. Local WordPress options table
+     *
+     * @param $args
+     * @param $assocArgs
+     *
+     */
+    public function register($args, $assocArgs)
+    {
+        $app = self::getApplication();
+        $this->logger = $app['logger'];
+        $this->settings = $app['settingsParser'];
+
+        if (count($args) != 1) {
+            $this->logger->logError('Usage: wp checksum register <email>');
+        }
+
+        $email = $args[0];
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->logger->logError("Invalid email address");
+        }
+
+        $apiClient = new ApiClient();
+        $result = $apiClient->registerEmail($email);
+        if (is_wp_error($result)) {
+            $this->logger->logError($result->get_error_message());
+        } else {
+            $this->logger->log('Email address registered. Please check your inbox for the validation email');
+            $this->logger->log('and click the link to validate your email address.');
+        }
+
+    }
+
+
+    /**
+     * Internal check
+     *
+     * @param $type
+     * @param $args
+     * @param $assocArgs
+     *
+     */
+    private function check($type, $args, $assocArgs)
+    {
+        $app = self::getApplication();
+        $this->logger = $app['logger'];
+        $this->settings = $app['settingsParser'];
 
         $details = $this->settings->getSetting('details', 'boolean', false);
         $format = $this->settings->getSetting('format', 'string', 'table');
@@ -95,30 +287,43 @@ class Checksum
             $this->logger->logError('Invalid format specified. Use one of table|json|csv|yaml');
         }
 
+	    $this->apiClient = new ApiClient();
+
         switch ($type) {
             case 'all':
                 $plugins = $this->checkPlugins($args);
                 $themes = $this->checkThemes($args);
                 $out = array_merge($plugins, $themes);
                 break;
+
             case 'plugin':
                 array_shift($args);
                 $out = $this->checkPlugins($args);
                 break;
+
             case 'theme':
                 array_shift($args);
                 $out = $this->checkThemes($args);
                 break;
+
             case 'quota':
                 $apiClient = new ApiClient();
                 $out = $apiClient->getQuota();
                 if ($out) {
                     $ret = array((array)$out);
-                    $this->logger->formatItems($format, $ret, 'limit, current, resetIn');
-                } else {
-
+                    $ret[0]['status'] = $ret[0]['validationStatus'];
+                    $this->logger->formatItems($format, $ret, 'limit, current, resetIn, status, email');
                 }
+                return;
+                break;
 
+            case 'apikey':
+
+
+
+            case 'register':
+                $apiClient = new ApiClient();
+                $out = $apiClient->getQuota();
                 return;
                 break;
         }
@@ -152,7 +357,7 @@ class Checksum
             }
 
             $this->logger->log("Checking plugin $slug");
-            $checker = new PluginChecker($localCache);
+            $checker = new PluginChecker($this->apiClient, $localCache);
             $out[] = $checker->check($id, $plugin);
         }
 
@@ -186,7 +391,7 @@ class Checksum
             }
 
             $this->logger->log("Checking theme $slug");
-            $checker = new ThemeChecker($localCache);
+            $checker = new ThemeChecker($this->apiClient, $localCache);
             $out[] = $checker->check($slug, $theme);
         }
 
