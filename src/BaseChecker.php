@@ -9,18 +9,35 @@ class BaseChecker
     /**
      * @var string
      */
-
     protected $basePath = '';
+
     /**
+     * Use a local file cache of the backend API
      * @var bool
      */
     protected $localCache = false;
 
     /**
-     * BaseChecker constructor.
+     * @var array
      */
-    public function __construct()
+    protected $softIssues = array();
+
+    /**
+     * Client for requests to api.wpessentials.io
+     * @var object
+     */
+    private $apiClient;
+
+    /**
+     * BaseChecker constructor.
+     *
+     * @param object $apiClient
+     * @param bool   $localCache
+     */
+    public function __construct($apiClient, $localCache = false)
     {
+        $this->apiClient = $apiClient;
+        $this->localCache = $localCache;
     }
 
     /**
@@ -67,18 +84,19 @@ class BaseChecker
                 $out = $this->getLocalChecksums($path);
             }
         } else {
-            $client = new ApiClient();
-            $out = $client->getChecksums($type, $slug, $version);
+            $out = $this->apiClient->getChecksums($type, $slug, $version);
         }
         return $out;
     }
 
     /**
-     * Calculate changes between local and orignial
+     * Compare the original set of files/checksums to the local
+     * set.
      *
-     * @param $original
-     * @param $local
-     * @return array
+     * @param array $original
+     * @param array $local
+     *
+     * @return array A set of changed files
      */
     public function getChangeSet($original, $local)
     {
@@ -88,11 +106,13 @@ class BaseChecker
                 if ($originalFile->hash != $local->checksums[$key]->hash) {
                     $change = $originalFile;
                     $change->status = 'MODIFIED';
+	                $change->isSoft = $this->isSoftChange($key, $change->status);
                     $changeSet[$key] = $change;
                 }
             } else {
                 $change = $originalFile;
                 $change->status = 'DELETED';
+	            $change->isSoft = $this->isSoftChange($key, $change->status);
                 $changeSet[$key] = $change;
             }
         }
@@ -101,11 +121,31 @@ class BaseChecker
             if (!isset($original->checksums[$key])) {
                 $change = $localFile;
                 $change->status = 'ADDED';
+	            $change->isSoft = $this->isSoftChange($key, $change->status);
                 $changeSet[$key] = $change;
             }
         }
 
         return $changeSet;
+    }
+
+    /**
+     * Check if a change can be classified as "soft"
+     *
+     * @param string $changedFile
+     * @param string $status
+     *
+     * @return boolean
+     */
+    private function isSoftChange($changedFile, $status)
+    {
+	    foreach ($this->softIssues as $pattern => $allowed) {
+		    if (fnmatch($pattern, $changedFile)) {
+			    return true;
+		    }
+	    }
+
+	    return false;
     }
 
     /**
