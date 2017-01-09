@@ -17,7 +17,7 @@ wp-checksum uses a backend API (https://api.wpessentials.io) to retreive the che
 
 ## Installation
 
-### As a wp-cli package
+### Globally, as a wp-cli package
 
 ```bash
 wp package install wp-checksum
@@ -30,7 +30,7 @@ wp-checksum can also be installed manually or via compser.
 $ composer require eriktorsner/wp-checksum
 ```
 
-To activate wp-checksum, you need to edit (or create) your wp-cli.yml file to make sure it includes the vendor/autoload.php file.
+To activate wp-checksum when installed locally via composer, you need to edit (or create) your wp-cli.yml file to make sure it includes the vendor/autoload.php file.
 
 ```bash
 require:
@@ -226,9 +226,13 @@ If no api key is found in any of the above locations, wp-checksum will attempt t
 
 ## Backend api and hourly rate limits
 
-The backed api and database are work in progress and requires a fair amount of work. In order to minimize various kinds of abuse, the api has an hourly rate limit. The first time you use wp-checksum, an anonymous api key is generated and stored in the WordPress options table. The anonymous key grants up 30 requests api per hour (subject to change). If you register and validate your email address, your hourly limit is raised to 100 requests per hour (subject to change). If you need to go beyond 100 requests per hour, you are welcome to subscribe to the service and paying a (small) montly fee. If you do that, also know that you are supporting a project that I think can do a lot of good for the WordPress community. Thanks in advance.
+The backed api and database are work in progress and requires a fair amount of work. In order to minimize various kinds of abuse, the api has an hourly rate limit. The first time you use wp-checksum, an anonymous api key is generated and stored in the WordPress options table. The anonymous key grants up 30 requests api per hour (subject to change). If you register and validate your email address, your hourly limit is raised to 100 requests per hour (subject to change). If you need to go beyond 100 requests per hour, you are welcome to subscribe to the service and paying a (small) montly fee. If you do that, also know that you are supporting a project that I think can do a lot of good for the WordPress community. Thanks in advance. 
+
+Please go to https://www.wpessentials.io/product-category/api-access/ to subscribe to a paid api key.
 
 I've previously announced a plan to release the code for the backend api as open source. While I havent completely abandoned that plan it's not going to be a high priority in the short term (2017). The main reasons is that the backend API has grown a lot more complex that it initially was and it's simply not feasable to maintain that service and support other users as well.
+
+
 
 ## Change log
 ### Version 0.2.0
