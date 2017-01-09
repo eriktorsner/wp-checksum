@@ -17,7 +17,14 @@ wp-checksum uses a backend API (https://api.wpessentials.io) to retreive the che
 
 ## Installation
 
-For now, wp-checksum is installed manually or via compser.
+### As a wp-cli package
+
+```bash
+wp package install wp-checksum
+```
+
+### Via composer
+wp-checksum can also be installed manually or via compser.
 
 ```bash
 $ composer require eriktorsner/wp-checksum
@@ -120,7 +127,14 @@ $ wp checksum quota --apikey=ABC123
 # Register email address to trigger validation email
 $ wp checksum register me@example.com
 ```
-
+```bash
+# See the default api key
+$ wp checksum apikey get
+```
+```bash
+# Set a new default api key
+$ wp checksum apikey set ABC123
+```
 
 ## Output
 By default, wp-checksum will output a table with information with the number of changes detected printed out;
