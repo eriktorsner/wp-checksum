@@ -84,6 +84,9 @@ class Checksum
      *
      * ## OPTIONS
      *
+     * [<slug>]
+     * : Optional. The slug of the theme, if omitted, check all themes
+     *
      * [--format=<table|json|csv|yaml>]
      * : Output format
      *
@@ -110,6 +113,9 @@ class Checksum
      * Verify integrity of all themes by comparing file checksums
      *
      * ## OPTIONS
+     *
+     * [<slug>]
+     * : Optional. The slug of the theme, if omitted, check all themes
      *
      * [--format=<table|json|csv|yaml>]
      * : Output format
@@ -297,12 +303,12 @@ class Checksum
                 break;
 
             case 'plugin':
-                array_shift($args);
+                //array_shift($args);
                 $out = $this->checkPlugins($args);
                 break;
 
             case 'theme':
-                array_shift($args);
+                //array_shift($args);
                 $out = $this->checkThemes($args);
                 break;
         }
