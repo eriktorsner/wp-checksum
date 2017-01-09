@@ -12,12 +12,15 @@ class ThemeChecker extends BaseChecker
      * ThemeChecker constructor.
      * @param bool $localCache
      */
-    public function __construct($localCache = false)
+    public function __construct($apiClient, $localCache = false)
     {
         $this->basePath = get_theme_root();
-        $this->localCache = $localCache;
 
-        parent::__construct();
+	    $this->softIssues = array(
+		    'readme.txt' => '*',
+	    );
+
+        parent::__construct($apiClient, $localCache);
     }
 
     /**
@@ -32,6 +35,7 @@ class ThemeChecker extends BaseChecker
         $ret = array();
         $ret['type'] = 'theme';
         $ret['slug'] = $slug;
+        $ret['name'] = $theme['Name'];
         $ret['version'] = $theme['Version'];
 
         $original = $this->getOriginalChecksums('theme', $slug, $theme['Version']);
