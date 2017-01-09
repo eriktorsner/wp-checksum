@@ -15,8 +15,17 @@ class ParametersProvider implements ServiceProviderInterface
             return $this;
         };
 
-        $pimple['apiBaseUrl'] = 'https://api.wpessentials.io/v1';
-        //$pimple['apiBaseUrl'] = 'http://api.wpessentials.local/v1';
+        $pimple['apiClient'] = function($pimple) {
+            return new WPChecksum\ApiClient();
+        };
+
+
+        $pimple['apiBaseUrl'] = $this->getSetting(
+        	'apiBaseUrl',
+            'string',
+	        'https://api.wpessentials.io/v1'
+        );
+
     }
 
     public function log($message)
