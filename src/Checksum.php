@@ -1,6 +1,7 @@
 <?php
 namespace WPChecksum;
 
+use integrityChecker\FileDiff;
 use Pimple\Container;
 
 class Checksum
@@ -31,13 +32,18 @@ class Checksum
 	private $apiClient;
 
     /**
+     * @param  \Pimple\ServiceProviderInterface $provider
+     *
      * @return \Pimple\Container
      */
-    public static function getApplication()
+    public static function getApplication($provider = null)
     {
         if (!self::$application) {
             self::$application = new Container();
-            self::$application->register(new \ParametersProvider());
+            if (!$provider) {
+                $provider = new \ParametersProvider();
+            }
+            self::$application->register($provider);
         }
 
         return self::$application;
@@ -272,6 +278,62 @@ class Checksum
 
     }
 
+    /**
+     * Diff a file in your local WordPress install with it's original from
+     * the WordPress.org repository
+     *
+     * ## OPTIONS
+     *
+     * <type>
+     * : core, plugin or theme
+     *
+     * [<slug>]
+     * : The slug to identify the plugin or theme. Skip this arg for core files
+     *
+     * <path>
+     * : The relative path of the file to check
+     *
+     * [--apikey]
+     * : Specify the api key to use. The api key will be read from (in priority):
+     *   1. Command line arguments
+     *   2. The wp-cli.yml file
+     *   3. Environment variable WP_CHKSM_APIKEY
+     *   4. Local WordPress options table
+     *
+     * @param $args
+     * @param $assocArgs
+     *
+     */
+    public function diff($args, $assocArgs)
+    {
+        $app = self::getApplication();
+        $this->logger = $app['logger'];
+        $this->settings = $app['settingsParser'];
+
+        $type = $args[0];
+        if (!in_array($type, array('core', 'plugin', 'theme'))) {
+            $this->logger->logError("Type must be one of core, plugin or theme");
+        }
+
+        if ($type == 'core') {
+            $slug = 'core';
+            $file = $args[1];
+        } else {
+            $slug = $args[1];
+            $file = $args[2];
+        }
+
+        $bin = 'diff';
+
+        $fileDiff = new \WPChecksum\FileDiff(new ApiClient());
+        $ret = $fileDiff->getDiff($type, $slug, $file, $bin);
+
+        if (is_wp_error($ret)) {
+            // no diff was possible and no output would have been made, error out
+            $this->logger->logError($ret->get_error_message());
+
+        }
+    }
 
     /**
      * Internal check
