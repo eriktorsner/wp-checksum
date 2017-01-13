@@ -207,6 +207,38 @@ class ApiClient
     }
 
     /**
+     * Get original source file of a plugin/theme
+     *
+     * @param string $type
+     * @param string $slug
+     * @param string $version
+     * @param string $file
+     *
+     * @return array|null|\WP_Error
+     */
+    public function getFile($type, $slug, $version, $file)
+    {
+        $this->lastError = 0;
+        $apiKey = $this->getApiKey();
+        if (!$apiKey) {
+            $this->logger->logError("No api key exists or can be created");
+            return null;
+        }
+
+        $url = join('/', array($this->baseUrl, 'file', $type, $slug, $version));
+        $args = array(
+            'headers' => array(
+                'Authorization' => $apiKey,
+                'X-Filename'    => $file,
+            )
+        );
+
+        $out = wp_remote_get($url, $args);
+        return $out;
+
+    }
+
+    /**
      * Read an API key from the WordPress DB or the wp-cli.yml file.
      *
      * If no API key is found, attempt to create a anonymous account
