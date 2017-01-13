@@ -11,6 +11,10 @@ class ParametersProvider implements ServiceProviderInterface
             return $this;
         };
 
+        $pimple['wrapper'] = function($pimple) {
+            return $this;
+        };
+
         $pimple['settingsParser'] = function($pimple) {
             return $this;
         };
@@ -36,6 +40,11 @@ class ParametersProvider implements ServiceProviderInterface
     public function logError($message)
     {
         \WP_CLI::error($message);
+    }
+
+    public function colorLine($message)
+    {
+        \WP_CLI::line(\WP_CLI::colorize($message));
     }
 
     public function formatItems($format, $out, $cols)
