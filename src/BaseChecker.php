@@ -22,6 +22,13 @@ class BaseChecker
     protected $localCache = false;
 
     /**
+     * Cache dir when using local cache. Defaults to /tmp
+     *
+     * @var string|bool
+     */
+    protected $localCacheDir = null;
+
+    /**
      * @var array
      */
     protected $softIssues = array();
@@ -37,11 +44,18 @@ class BaseChecker
      *
      * @param object $apiClient
      * @param bool   $localCache
+     * @param string $localCacheDir
      */
-    public function __construct($apiClient, $localCache = false)
+    public function __construct($apiClient, $localCache = false, $localCacheDir = null)
     {
         $this->apiClient = $apiClient;
         $this->localCache = $localCache;
+
+        $this->localCacheDir = $localCacheDir;
+        if (is_null($localCacheDir)) {
+            $this->localCacheDir = sys_get_temp_dir();
+        }
+        $this->localCacheDir = rtrim($this->localCacheDir, '/');
     }
 
     /**
@@ -81,11 +95,23 @@ class BaseChecker
                     break;
             }
 
-            $url = sprintf($localTemplate, $slug, $version);
-            $ret = $this->downloadZip($url);
-            if ($ret) {
+            $zipFile = $this->cachedFileName($type, $slug, $version);
+            if (!file_exists($zipFile)) {
+                $url = sprintf($localTemplate, $slug, $version);
+                $repoInfo = new WPRepository($slug, $type);
+                if (!is_null($repoInfo->slug) && $repoInfo->version == $version) {
+                    $url = $repoInfo->download_link;
+                }
+                $this->downloadZip($url, $zipFile);
+            }
+
+            if (file_exists($zipFile)) {
+                $ret = $this->extractZip($zipFile);
                 $path = $ret . "/$slug";
+
                 $out = $this->getLocalChecksums($path);
+                $this->rrmdir($ret);
+
             }
         } else {
             $out = $this->apiClient->getChecksums($type, $slug, $version);
@@ -155,28 +181,72 @@ class BaseChecker
     /**
      * Download and unpack zip file
      *
-     * @param $url
-     * @return null|string
+     * @param string $url
+     * @param string $target
+     *
+     * @return boolean
      */
-    private function downloadZip($url)
+    private function downloadZip($url, $target)
     {
-        $response = wp_remote_get($url);
+        $response = wp_remote_get($url, array('timeout' => 15));
         if ($response['response']['code'] != 200) {
-            return null;
+            return false;
         }
+        file_put_contents($target, $response['body']);
+        return true;
+    }
 
-        $fileName = wp_tempnam();
-        file_put_contents($fileName, $response['body']);
-
-        $folderName = $fileName . '.extracted';
-        @mkdir($folderName, 0777, true);
+    /**
+     * @param string $zipFile
+     *
+     * @return string
+     */
+    private function extractZip($zipFile)
+    {
+        $extractFolder = sys_get_temp_dir() . '/chksm_' . md5(microtime(true)) . '.extracted';
+        @mkdir($extractFolder, 0777, true);
         $zip = new \ZipArchive;
-        $zip->open($fileName);
-        $zip->extractTo($folderName);
+        $zip->open($zipFile);
+        $zip->extractTo($extractFolder);
         $zip->close();
-        unlink($fileName);
 
-        return $folderName;
+        return $extractFolder;
+    }
 
+    /**
+     *
+     * @param string $type
+     * @param string $slug
+     * @param string $version
+     *
+     * @return string|boolean Path to file if found or false
+     */
+    private function cachedFileName($type, $slug, $version)
+    {
+        $fileName = $this->localCacheDir . '/' . md5(join('.', array($type, $slug, $version)));
+        return $fileName;
+    }
+
+    /**
+     * Recursive remove dir
+     *
+     * @param string $dir
+     */
+    private function rrmdir($dir)
+    {
+        if (is_dir($dir)) {
+            $objects = scandir($dir);
+            foreach ($objects as $object) {
+                if ($object == "." || $object == "..") {
+                    continue;
+                }
+                if (is_dir($dir."/".$object)) {
+                    $this->rrmdir($dir."/".$object);
+                } else {
+                    unlink($dir."/".$object);
+                }
+            }
+            rmdir($dir);
+        }
     }
 }
