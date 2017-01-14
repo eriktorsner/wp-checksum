@@ -173,6 +173,7 @@ class Checksum
         $format = $this->settings->getSetting('format', 'string', 'table');
         if (!in_array($format, array('table', 'json', 'csv', 'yaml'))) {
             $this->logger->logError('Invalid format specified. Use one of table|json|csv|yaml');
+            return;
         }
 
         $apiClient = new ApiClient();
@@ -183,6 +184,7 @@ class Checksum
             $this->logger->formatItems($format, $ret, 'limit, current, resetIn, status, email');
         } else {
             $this->logger->logError($out->get_error_message());
+            return;
         }
     }
 
@@ -220,12 +222,14 @@ class Checksum
             case 'set';
                 if (count($args) != 2) {
                     $this->logger->logError('Usage: wp checksum apikey set <apikey>');
+                    return;
                 }
                 $newKey = $args[1];
                 $apiClient = new ApiClient();
                 $result = $apiClient->verifyApiKey($newKey);
                 if (is_wp_error($result)) {
                     $this->logger->logError($result->get_error_message());
+                    return;
                 } else {
                     $this->logger->log('New api key stored!');
                 }
@@ -260,17 +264,20 @@ class Checksum
 
         if (count($args) != 1) {
             $this->logger->logError('Usage: wp checksum register <email>');
+            return;
         }
 
         $email = $args[0];
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $this->logger->logError("Invalid email address");
+            return;
         }
 
         $apiClient = new ApiClient();
         $result = $apiClient->registerEmail($email);
         if (is_wp_error($result)) {
             $this->logger->logError($result->get_error_message());
+            return;
         } else {
             $this->logger->log('Email address registered. Please check your inbox for the validation email');
             $this->logger->log('and click the link to validate your email address.');
@@ -313,6 +320,7 @@ class Checksum
         $type = $args[0];
         if (!in_array($type, array('core', 'plugin', 'theme'))) {
             $this->logger->logError("Type must be one of core, plugin or theme");
+            return;
         }
 
         if ($type == 'core') {
@@ -331,7 +339,7 @@ class Checksum
         if (is_wp_error($ret)) {
             // no diff was possible and no output would have been made, error out
             $this->logger->logError($ret->get_error_message());
-
+            return;
         }
     }
 
@@ -353,6 +361,7 @@ class Checksum
         $format = $this->settings->getSetting('format', 'string', 'table');
         if (!in_array($format, array('table', 'json', 'csv', 'yaml'))) {
             $this->logger->logError('Invalid format specified. Use one of table|json|csv|yaml');
+            return;
         }
 
 	    $this->apiClient = new ApiClient();
