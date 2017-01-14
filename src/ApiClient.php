@@ -69,6 +69,8 @@ class ApiClient
             return $ret;
         }
 
+        $out = null;
+
         switch ($ret['response']['code']) {
             case 401:
                 $this->lastError = self::INVALID_APIKEY;
@@ -93,15 +95,16 @@ class ApiClient
     public function verifyApiKey($apiKey)
     {
         $ret = $this->getQuota($apiKey);
+        if (is_null($ret)) {
+            return new \WP_Error(400, 'Unknown error');
+        }
+
         if ($this->lastError === 0) {
             update_option('wp_checksum_apikey', $apiKey);
-            $ret->message = __('API key updated', 'integrity-checker');
+            $ret->message = 'API key updated';
             return $ret;
         } else {
-            return new \WP_Error(
-                400,
-                __('API key verification failed. Key not updated', 'integrity-checker')
-            );
+            return new \WP_Error(400, 'API key verification failed. Key not updated');
         }
     }
 
