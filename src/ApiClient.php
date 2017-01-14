@@ -133,6 +133,7 @@ class ApiClient
                 'host' => get_site_url(),
             )),
         );
+        $args = http_build_query($args);
         $out = wp_remote_post($url, $args);
 
         if (is_wp_error($out)) {
