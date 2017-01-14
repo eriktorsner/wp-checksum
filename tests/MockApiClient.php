@@ -32,7 +32,30 @@ class MockApiClient
 
     public function getFile($type, $slug, $version, $file)
     {
+        $folder = 'remote-' . $type;
 
+        $ret = array(
+            'headers' => null,
+            'response' => array(),
+            'cookies' => array(),
+            'filename' => null,
+            'http_response' => null
+        );
+
+        $fileName = __DIR__ . "/fixtures/$folder/$file";
+        if ($type != 'core') {
+            $fileName = __DIR__ . "/fixtures/$folder/$slug/$file";
+        }
+
+        if (file_exists($fileName)) {
+            $ret['response']['code'] = 200;
+            $ret['body'] = file_get_contents($fileName);
+        } else {
+            $ret['response']['code'] = 404;
+            $ret['response']['message'] = 'File not found';
+            $ret['body'] = '';
+        }
+        return $ret;
     }
 
     ////////////

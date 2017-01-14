@@ -4,19 +4,26 @@ namespace WPChecksum;
 
 class ThemeCheckerTest extends \PHPUnit_Framework_TestCase
 {
+    public function __construct()
+    {
+        setHttpMode('real');
+    }
+
+
     public function testLocal()
     {
         require_once __DIR__ . '/../TestsProvider.php';
         $app = Checksum::getApplication(new \TestsProvider(array()));
 
         $checker = new ThemeChecker(null, true);
-        $out = $checker->check(
-            'twentytwelve',
-            array(
-                'Name' => 'TwentyTwelve',
-                'Version' => '2.2',
-            )
-        );
+        $theme = new \MockTheme(array(
+            'Name' => 'TwentyTwelve',
+            'Version' => '2.2',
+            'stylesheet' => 'twentytwelve',
+            'theme_root' => __DIR__ . '/fixtures/themes',
+            'template' => 'twentytwelve',
+        ));
+        $out = $checker->check('twentytwelve', $theme);
 
         $this->assertTrue(isset($out['type']));
         $this->assertTrue(isset($out['slug']));
@@ -37,13 +44,15 @@ class ThemeCheckerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($out['changeset']['archive.php']->isDir, 0);
         $this->assertEquals($out['changeset']['archive.php']->isSoft, false);
 
-        $out = $checker->check(
-            'premium',
-            array(
-                'Name' => 'Premium',
-                'Version' => '1.6',
-            )
-        );
+
+        $theme = new \MockTheme(array(
+            'Name' => 'Premium',
+            'Version' => '2.2',
+            'stylesheet' => 'premium',
+            'theme_root' => __DIR__ . '/fixtures/themes',
+            'template' => 'premium',
+        ));
+        $out = $checker->check('premium', $theme);
 
     }
 }

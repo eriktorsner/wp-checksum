@@ -6,6 +6,10 @@ use \Pimple\Container;
 
 class WPRepositoryTest extends \PHPUnit_Framework_TestCase
 {
+    public function __construct()
+    {
+        setHttpMode('real');
+    }
 
     public function testOne()
     {

@@ -1,41 +1,13 @@
 <?php
 require_once __DIR__.'/../vendor/autoload.php';
+require_once __DIR__.'/class-wp-error.php';
+require_once __DIR__.'/httpFunctions.php';
+require_once __DIR__.'/optionFunctions.php';
 
-function wp_remote_post($url, $args)
-{
-    $postdata = http_build_query($args);
-    $opts = array('http' =>
-                      array(
-                          'method'  => 'POST',
-                          'header'  => 'Content-type: application/x-www-form-urlencoded',
-                          'content' => $postdata,
-                      )
-    );
+define('ABSPATH', __DIR__ . '/fixtures/core/');
+define('WPINC', 'wp-includes');
+define('WP_PLUGIN_DIR', __DIR__ . '/fixtures/plugins');
 
-    $context  = stream_context_create($opts);
-    $content = file_get_contents($url, false, $context);
-    $codeParts = explode(' ', $http_response_header[0]);
-
-    return [
-        'response' => [
-            'code' => $codeParts[1],
-        ],
-        'body' => $content,
-    ];
-}
-
-function wp_remote_get($url)
-{
-    $content = @file_get_contents($url);
-    $codeParts = explode(' ', $http_response_header[0]);
-
-    return [
-        'response' => [
-            'code' => $codeParts[1],
-        ],
-        'body' => $content,
-    ];
-}
 
 function get_theme_root()
 {
@@ -46,4 +18,60 @@ function wp_tempnam()
 {
     $dir = sys_get_temp_dir();
     return tempnam($dir, 'wpessapi');
+}
+
+function get_plugins()
+{
+    return array(
+        'hello-dolly/hello.php' => array(
+            'Name' => 'Hello Dolly',
+            'Version' => '1.6',
+        ),
+    );
+}
+
+function is_wp_error( $thing ) {
+    return ( $thing instanceof WP_Error );
+}
+
+function get_site_url()
+{
+    return 'http://test.example.com';
+}
+
+class MockTheme {
+    public function __construct($variables)
+    {
+        $this->variables = $variables;
+    }
+
+    public function get($name)
+    {
+        return $this->variables[$name];
+    }
+
+    public function __get($name)
+    {
+        return $this->variables[$name];
+    }
+}
+
+function wp_get_themes()
+{
+    return array(
+        'twentytwelve' => new MockTheme(array(
+            'Name' => 'TwentyTwelve',
+            'Version' => '1.2',
+            'stylesheet' => 'twentytwelve',
+            'theme_root' => __DIR__ . '/fixtures/themes',
+            'template' => 'twentytwelve',
+        )),
+        'twentytwelveLocalOnly' => new MockTheme(array(
+            'Name' => 'TwentyTwelveLocal',
+            'Version' => '1.2',
+            'stylesheet' => 'twentytwelvelocal',
+            'theme_root' => __DIR__ . '/fixtures/themes',
+            'template' => 'twentytwelve',
+        )),
+    );
 }

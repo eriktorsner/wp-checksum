@@ -4,10 +4,14 @@ namespace WPChecksum;
 
 class PluginCheckerTest extends \PHPUnit_Framework_TestCase
 {
+    public function __construct()
+    {
+        setHttpMode('real');
+    }
+
+
     public function testLocal()
     {
-        define('WP_PLUGIN_DIR', __DIR__ . '/../fixtures/plugins');
-
         require_once __DIR__ . '/../TestsProvider.php';
         $app = Checksum::getApplication(new \TestsProvider(array()));
 

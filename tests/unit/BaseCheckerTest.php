@@ -6,7 +6,6 @@ use \Pimple\Container;
 
 class BaseCheckerTest extends \PHPUnit_Framework_TestCase
 {
-
     public function testConstruct()
     {
         require_once __DIR__ . '/../TestsProvider.php';
@@ -36,6 +35,7 @@ class BaseCheckerTest extends \PHPUnit_Framework_TestCase
 
     public function testGetOriginalChecksums()
     {
+        setHttpMode('real');
         require_once __DIR__ . '/../TestsProvider.php';
         $app = Checksum::getApplication(new \TestsProvider(array()));
 
@@ -55,6 +55,7 @@ class BaseCheckerTest extends \PHPUnit_Framework_TestCase
 
     public function testGetOriginalChecksumsLocal()
     {
+        setHttpMode('real');
         require_once __DIR__ . '/../TestsProvider.php';
         $app = Checksum::getApplication(new \TestsProvider(array()));
 

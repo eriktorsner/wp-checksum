@@ -5,6 +5,8 @@ use Pimple\Container;
 
 class TestsProvider implements ServiceProviderInterface
 {
+    public $output = array();
+
     public function __construct($settings)
     {
         $this->settings = $settings;
@@ -38,24 +40,47 @@ class TestsProvider implements ServiceProviderInterface
 
     }
 
+    public function resetLog()
+    {
+        $this->output = array();
+    }
+
     public function log($message)
     {
-        \WP_CLI::log($message);
+        $this->output[] = array(
+            'cmd'     => 'log',
+            'content' => $message
+        );
     }
 
     public function logError($message)
     {
-        \WP_CLI::error($message);
+        $this->output[] = array(
+            'cmd'     => 'error',
+            'content' => $message
+        );
     }
 
     public function colorLine($message)
     {
-        \WP_CLI::line(\WP_CLI::colorize($message));
+        $this->output[] = array(
+            'cmd'     => 'line',
+            'content' => 'colorize:'  . $message
+        );
     }
 
     public function formatItems($format, $out, $cols)
     {
-        \WP_CLI\Utils\format_items($format, $out, $cols);
+        $this->output[] = array(
+            'cmd'     => 'format_items',
+            'content' => $out,
+        );
+
+    }
+
+    public function setSetting($name, $value)
+    {
+        $this->settings[$name] = $value;
     }
 
     /**
@@ -77,4 +102,6 @@ class TestsProvider implements ServiceProviderInterface
 
         return $default;
     }
+
+
 }
