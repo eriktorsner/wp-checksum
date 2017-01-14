@@ -130,7 +130,7 @@ class FileDiff
     private function getPluginFiles($slug, $file)
     {
         if ($info = $this->getPluginInfo($slug)) {
-            $localFile        = $info->root . '/' . $file;
+            $localFile = $info->root . '/' . $file;
 
             $remoteFile = $this->apiClient->getFile('plugin', $slug, $info->version, $file);
 
