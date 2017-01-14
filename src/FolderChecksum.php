@@ -90,10 +90,6 @@ class FolderChecksum
             }
 
             $cols = explode("\t", trim($row));
-            // Skip directories
-            if ($cols[4] == '1' || count($cols) == 1) {
-                continue;
-            }
 
             $obj = new \stdClass();
             $obj->date = $cols[1];
