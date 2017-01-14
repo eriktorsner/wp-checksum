@@ -28,27 +28,26 @@ function wp_remote_post($url, $args = null)
     }
 }
 
-function wp_remote_get($url)
+function wp_remote_get($url, $args = null)
 {
     global $TEST_HTTP_MODE;
     switch ($TEST_HTTP_MODE) {
         case 'real':
-            return real_wp_remote_get($url);
+            return real_wp_remote_get($url, $args);
             break;
         case 'mock':
-            return mock_wp_remote_get($url);
+            return mock_wp_remote_get($url, $args);
             break;
     }
 }
 
 function real_wp_remote_post($url, $args)
 {
-    $postdata = http_build_query($args);
     $opts = array('http' =>
                       array(
                           'method'  => 'POST',
                           'header'  => 'Content-type: application/x-www-form-urlencoded',
-                          'content' => $postdata,
+                          'content' => isset($args['body'])? $args['body'] : null,
                       )
     );
 
@@ -70,7 +69,7 @@ function mock_wp_remote_post($url, $args)
     return array_shift($mockResponses);
 }
 
-function real_wp_remote_get($url)
+function real_wp_remote_get($url, $args = null)
 {
     $content = @file_get_contents($url);
     $codeParts = explode(' ', $http_response_header[0]);
@@ -83,7 +82,7 @@ function real_wp_remote_get($url)
     ];
 }
 
-function mock_wp_remote_get($url)
+function mock_wp_remote_get($url, $args = null)
 {
     global $mockResponses;
     return array_shift($mockResponses);
