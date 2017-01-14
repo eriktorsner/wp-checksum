@@ -1,11 +1,17 @@
 # wp-checksum
 
-Wp-cli subcommand for verifying checksums of themes and plugins. It checks the md5 sum of all files inside each plugin and theme and compares against what the same plugin/theme looks like on the WordPress repo. The core wp-cli command has this functionality for core, this sub command brings the same for plugins and themes.
+Wp-cli sub command for verifying checksum data for themes and plugins. It checks the md5 sum of all files inside each plugin and theme and compares against what the same plugin/theme looks like on the WordPress repo. The core wp-cli command has this functionality for core, this sub command brings the same for plugins and themes.
 
 wp-checksum checks for added, removed or modified files and prints out info about files that does not match the original file as it exists in the .org repositories.
 
 ## Backend api
-wp-checksum uses a backend API (https://api.wpessentials.io) to retreive the checksums for known plugins and themes from our database. Read more about how the api and hourly rate limits work in the section "Backend api and rate limits" below.
+wp-checksum uses a backend API (https://api.wpessentials.io) to retreive the checksums for known plugins and themes from our database. It's also possible to run wp-checksum in local mode, In this case wp-checksum, downloads zip-files directly from the Wordpress.org repository and avoid using the API. There are several advantages of using the API over local mode:
+   - Performance
+   - Reliability
+   - WordPress.org does't keep zip-files available for all versions of all plugins, roughly 15% av all plugins are affected. The remote API can deliver checksum data for these plugins but that's not possible when running wp-checksum locally.
+   - The diff sub command currently only works with the remote API
+
+Read more about how the api and hourly rate limits work in the section "Backend api and rate limits" below.
 
 
 ### Known issues
@@ -48,20 +54,24 @@ path: /path/to/my/wordpress/installation
 ### SUBCOMMANDS
 
   all           Verify integrity of plugins and themes by comparing file checksums
-  apikey        Get or set the api key stored in WordPress options table
   plugin        Verify integrity of all plugins by comparing file checksums
+  theme         Verify integrity of all themes by comparing file checksums
+  diff          Diff a file in your local WordPress install with it's original
+  apikey        Get or set the api key stored in WordPress options table
   quota         Print API rate limits for current api key
   register      Register email address for the current api key to increase hourly quota.
-  theme         Verify integrity of all themes by comparing file checksums
+
 ```
 
 ### Global options
-  - **--format** Optional. How to format the output. Table (default), json, csv or yaml
-  - **--apikey** Optional. Specify key to override the default key
+  - **--format**     Optional. How to format the output. Table (default), json, csv or yaml
+  - **--apikey**     Optional. Specify key to override the default key
+  - **--local**      Optional. Run in local mode. Download zip files from wordpress.org for local extraction and comparision.
+  - **--localcache** Optional. Specify where wp-checksum keeps copies of downloaded zip files. Defaults to /tmp
 
 ### wp checksum all|theme|plugin
 
-The base functionality of wp-checksum. Verifies local checksums for everything (all), all plugins (plugin) or all themes (theme). For the plugin and theme sub commands, you can optionally specify a slug to just verify a specific plugin or theme.
+The base functionality of wp-checksum. Verifies local checksum data for everything (all), all plugins (plugin) or all themes (theme). For the plugin and theme sub commands, you can optionally specify a slug to just verify a specific plugin or theme.
 
 
 #### OPTIONS
@@ -69,6 +79,17 @@ The base functionality of wp-checksum. Verifies local checksums for everything (
   - **--format** Optional. How to format the output. Table (default), json, csv or yaml
   - **--details** Optional. Set this flag to output details about all modified/added/deleted files
   - **--apikey** Optional. Specify key to override the default key
+
+### wp checksum diff &lt;type&gt; [&lt;slug&gt;] &lt;path&gt;
+
+Diff a file in your local WordPress install with it's original
+
+#### OPTIONS
+  - **type** core, theme or plugin
+  - **slug** The slug to identify the plugin or theme. Skip this arg for core files
+  - **path** Path of the file to check, relative to the root of core or the theme or plugin
+  
+The diff command determines the local version of the object to compare and then retreives the corresponding original file. If both files are found, the two files are compared using the command diff. Output is colored so that new or changed lines in the local version are red. 
 
 ### wp checksum quota
 
@@ -96,8 +117,16 @@ Connect your email address to the default (or specified via --apikey) key to rai
 ## Examples
 
 ```bash
-# Check themes and plugins, format output as table (default(
+# Check themes and plugins, format output as table (default), use API
 $ wp checksum all
+```
+```bash
+# Check themes and plugins, use locally stored zipfiles in /tmp 
+$ wp checksum all --local
+```
+```bash
+# Check themes and plugins, use locally stored zipfiles in /var/zipcache 
+$ wp checksum all --local --localcache=/var/zipcache
 ```
 ```bash
 # Only check themes, format as json and include details
@@ -114,6 +143,18 @@ $ wp checksum plugin --quiet
 ```bash
 # Check a specific plugin
 $ wp checksum plugin jetpack
+```
+```bash
+# Diff a core file
+$ wp checksum diff core wp-admin/about.php
+```
+```bash
+# Diff a plugin file
+$ wp checksum diff plugin hello-dolly hello.php
+```
+```bash
+# Diff a theme file
+$ wp checksum diff theme twentytwelve 404.php
 ```
 ```bash
 # Check the current API rate limit for the current api key
@@ -202,9 +243,10 @@ Naturally, getting detailed output makes a whole lot more sense when using yaml,
 	"Issues": null
 }]
 ```
+
 ## Parameters in wp-cli.yml
 
-Default values for parameters **apikey**, **details** and **format** can be entered into the wp-cli.yml file. Add a section named checksum: 
+Default values for parameters **apikey**, **details**, **local**, **localcache** and **format** can be entered into the wp-cli.yml file. Add a section named checksum: 
 
 ```yaml
 
@@ -212,6 +254,8 @@ checksum:
   details: yes
   format: json
   apikey: ABC123
+  local: yes
+  localcache: /var/zipcache
 ``` 
 
 ## Specifying the api key
@@ -232,8 +276,10 @@ Please go to https://www.wpessentials.io/product-category/api-access/ to subscri
 
 I've previously announced a plan to release the code for the backend api as open source. While I havent completely abandoned that plan it's not going to be a high priority in the short term (2017). The main reasons is that the backend API has grown a lot more complex that it initially was and it's simply not feasable to maintain that service and support other users as well.
 
-
-
 ## Change log
+
+### Version 0.3.0
+New sub command diff. Unit tests added, 97% coverage.
+
 ### Version 0.2.0
 Changed default behaviour. The naked command "wp checksum" previously was a short for for sub command "wp checksum all". Now the naked command just displays usage information.
