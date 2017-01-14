@@ -69,6 +69,12 @@ class Checksum
      * [--details]
      * : Set this to output a detailed change set instead of a summary
      *
+     * [--local]
+     * : Get checksum data directly from wordpress.org instead of via the remote API
+     *
+     * [--localcache]
+     * : Where should wp-checksum keep copies of downloaded zip files. Defaults to /tmp
+     *
      * [--apikey]
      * : Specify the api key to use. The api key will be read from (in priority):
      *   1. Command line arguments
@@ -99,6 +105,12 @@ class Checksum
      * [--details]
      * : Set this to output a detailed change set instead of a summary
      *
+     * [--local]
+     * : Get checksum data directly from wordpress.org instead of via the remote API
+     *
+     * [--localcache]
+     * : Where should wp-checksum keep copies of downloaded zip files. Defaults to /tmp
+     *
      * [--apikey]
      * : Specify the api key to use. The api key will be read from (in priority):
      *   1. Command line arguments
@@ -128,6 +140,12 @@ class Checksum
      *
      * [--details]
      * : Set this to output a detailed change set instead of a summary
+     *
+     * [--local]
+     * : Get checksum data directly from wordpress.org instead of via the remote API
+     *
+     * [--localcache]
+     * : Where should wp-checksum keep copies of downloaded zip files. Defaults to /tmp
      *
      * [--apikey]
      * : Specify the api key to use. The api key will be read from (in priority):
@@ -364,23 +382,29 @@ class Checksum
             return;
         }
 
+        $local = $this->settings->getSetting('local', 'boolean', false);
+        $localCacheDir = $this->settings->getSetting('localcache', 'string', false);
+
+        if ($localCacheDir && !file_exists($localCacheDir)) {
+            $this->logger->logError('Invalid localcache folder specified');
+            return;
+        }
+
 	    $this->apiClient = new ApiClient();
 
         switch ($type) {
             case 'all':
-                $plugins = $this->checkPlugins($args);
-                $themes = $this->checkThemes($args);
+                $plugins = $this->checkPlugins($args, $local, $localCacheDir);
+                $themes = $this->checkThemes($args, $local, $localCacheDir);
                 $out = array_merge($plugins, $themes);
                 break;
 
             case 'plugin':
-                //array_shift($args);
-                $out = $this->checkPlugins($args);
+                $out = $this->checkPlugins($args, $local, $localCacheDir);
                 break;
 
             case 'theme':
-                //array_shift($args);
-                $out = $this->checkThemes($args);
+                $out = $this->checkThemes($args, $local, $localCacheDir);
                 break;
         }
 
@@ -390,12 +414,13 @@ class Checksum
     /**
      * Run checksums for all plugins or a single named plugin
      *
-     * @param $args
-     * @param bool $localCache
+     * @param array  $args
+     * @param bool   $localCache
+     * @param string $localCacheDir
      *
      * @return array
      */
-    private function checkPlugins($args, $localCache = false)
+    private function checkPlugins($args, $localCache = false, $localCacheDir = null)
     {
         $scope = 'all';
 
@@ -413,7 +438,7 @@ class Checksum
             }
 
             $this->logger->log("Checking plugin $slug");
-            $checker = new PluginChecker($this->apiClient, $localCache);
+            $checker = new PluginChecker($this->apiClient, $localCache, $localCacheDir);
             $out[] = $checker->check($id, $plugin);
         }
 
@@ -423,12 +448,13 @@ class Checksum
     /**
      * Run checksums for all themes or a single named theme
      *
-     * @param $args
-     * @param bool $localCache
+     * @param array  $args
+     * @param bool   $localCache
+     * @param string $localCacheDir
      *
      * @return array
      */
-    private function checkThemes($args, $localCache = false)
+    private function checkThemes($args, $localCache = false, $localCacheDir = null)
     {
         $scope = 'all';
         if (count($args) > 0) {
@@ -447,7 +473,7 @@ class Checksum
             }
 
             $this->logger->log("Checking theme $slug");
-            $checker = new ThemeChecker($this->apiClient, $localCache);
+            $checker = new ThemeChecker($this->apiClient, $localCache, $localCacheDir);
             $out[] = $checker->check($slug, $theme);
         }
 
