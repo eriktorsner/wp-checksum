@@ -67,17 +67,23 @@ class ParametersProvider implements ServiceProviderInterface
     {
         $cli = \WP_CLI::get_runner();
 
+        // Assume default
         $ret = $default;
+
+        // If present in settings, override default
         if (isset($cli->extra_config['checksum'][$name])) {
             $ret = $cli->extra_config['checksum'][$name];
-            switch ($type) {
-                case 'boolean':
-                    $ret = filter_var($ret, FILTER_VALIDATE_BOOLEAN);
-                    break;
-            }
-
         }
+
+        // If present on command line, override previous value
         $ret = \WP_CLI\Utils\get_flag_value($cli->assoc_args, $name, $ret);
+
+        // Filter per type
+        switch ($type) {
+            case 'boolean':
+                $ret = filter_var($ret, FILTER_VALIDATE_BOOLEAN);
+                break;
+        }
 
         return $ret;
     }
