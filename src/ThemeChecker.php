@@ -37,10 +37,10 @@ class ThemeChecker extends BaseChecker
         $ret = array();
         $ret['type'] = 'theme';
         $ret['slug'] = $slug;
-        $ret['name'] = $theme['Name'];
-        $ret['version'] = $theme['Version'];
+        $ret['name'] = $theme->Name;
+        $ret['version'] = $theme->Version;
 
-        $original = $this->getOriginalChecksums('theme', $slug, $theme['Version']);
+        $original = $this->getOriginalChecksums('theme', $slug, $theme->Version);
         if ($original) {
             $local = $this->getLocalChecksums($this->basePath . "/$slug");
             $changeSet = $this->getChangeSet($original, $local);
