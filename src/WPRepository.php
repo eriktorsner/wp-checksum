@@ -39,7 +39,8 @@ class WPRepository
             'action' => $type == 'plugin'?'plugin_information':'theme_information',
             'request' => serialize($apiArgs),
         );
-        $response = wp_remote_post(self::WPAPI_PLUGIN_URL, $args);
+        $args = http_build_query($args);
+        $response = wp_remote_post(self::WPAPI_PLUGIN_URL, array('body' => $args));
         $this->result = unserialize($response['body']);
     }
 
@@ -64,5 +65,5 @@ class WPRepository
     {
         return $this->result != null;
     }
-    
+
 }
