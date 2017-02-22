@@ -30,6 +30,7 @@ class ApiClientTest extends \PHPUnit_Framework_TestCase
             array(
                 'response' => array('code' => 200),
                 'body' => json_encode('success'),
+                'http_response' => new \MockHttpResponse(['foo' => 'bar', 'x-checksum-site-id' => 'abc123']),
             ),
             new \WP_Error(999, 'foobar'),
         ));
@@ -72,7 +73,7 @@ class ApiClientTest extends \PHPUnit_Framework_TestCase
         $ret = $apiClient->getQuota();
         putenv('WP_CHKSM_APIKEY=');
 
-        setMockOptions(array('yadya'));
+        setMockOptions(array('yadya', 'abc123'));
         $ret = $apiClient->getQuota();
 
         $settings->setSetting('apikey', 'YAYAYAYAYA');
@@ -122,11 +123,15 @@ class ApiClientTest extends \PHPUnit_Framework_TestCase
             new \WP_Error(999, 'foobar'),
         ));
 
+
+
         $apiClient = new ApiClient();
 
+        setMockOptions(array('yadya', 'abc123'));
         $ret = $apiClient->registerEmail('');
         $this->assertTrue(is_wp_error($ret));
         $this->assertEquals(5, $ret->get_error_code());
+
 
         $ret = $apiClient->registerEmail('');
         $this->assertTrue(is_wp_error($ret));
@@ -182,6 +187,7 @@ class ApiClientTest extends \PHPUnit_Framework_TestCase
 
         $apiClient = new ApiClient();
 
+        setMockOptions(array('abc123'));
         $ret = $apiClient->getChecksums('plugin', 'foobar', '1.0');
         $this->assertEquals(null, $ret);
 
@@ -222,6 +228,7 @@ class ApiClientTest extends \PHPUnit_Framework_TestCase
             ),
         ));
 
+        setMockOptions(array('abc123'));
         $apiClient = new ApiClient();
         $ret = $apiClient->getFile('', '', '', '');
         $this->assertTrue(is_array($ret));
