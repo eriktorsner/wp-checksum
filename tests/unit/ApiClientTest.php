@@ -30,7 +30,9 @@ class ApiClientTest extends \PHPUnit_Framework_TestCase
             array(
                 'response' => array('code' => 200),
                 'body' => json_encode('success'),
-                'http_response' => new \MockHttpResponse(['foo' => 'bar', 'x-checksum-site-id' => 'abc123']),
+                'http_response' => new \MockHttpResponse(
+                    array('foo' => 'bar', 'x-checksum-site-id' => 'abc123')
+                ),
             ),
             new \WP_Error(999, 'foobar'),
         ));
