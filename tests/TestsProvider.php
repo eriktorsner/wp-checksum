@@ -14,16 +14,17 @@ class TestsProvider implements ServiceProviderInterface
 
     public function register(Container $pimple)
     {
-        $pimple['logger'] = function($pimple) {
-            return $this;
+        $_this = $this;
+        $pimple['logger'] = function($pimple) use($_this) {
+            return $_this;
         };
 
-        $pimple['wrapper'] = function($pimple) {
-            return $this;
+        $pimple['wrapper'] = function($pimple) use($_this) {
+            return $_this;
         };
 
-        $pimple['settingsParser'] = function($pimple) {
-            return $this;
+        $pimple['settingsParser'] = function($pimple) use($_this) {
+            return $_this;
         };
 
         $pimple['apiClient'] = function($pimple) {
