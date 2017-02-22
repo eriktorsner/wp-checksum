@@ -75,3 +75,29 @@ function wp_get_themes()
         )),
     );
 }
+
+class MockHttpResponse
+{
+    public function __construct($arr)
+    {
+        $this->headers = $arr;
+    }
+
+    public function get_headers()
+    {
+        return new MockDict($this->headers);
+    }
+}
+
+class MockDict
+{
+    public function __construct($arr)
+    {
+        $this->arr = $arr;
+    }
+
+    public function getAll()
+    {
+        return $this->arr;
+    }
+}
