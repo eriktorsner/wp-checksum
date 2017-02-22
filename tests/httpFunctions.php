@@ -55,12 +55,12 @@ function real_wp_remote_post($url, $args)
     $content = file_get_contents($url, false, $context);
     $codeParts = explode(' ', $http_response_header[0]);
 
-    return [
-        'response' => [
+    return array(
+        'response' => array(
             'code' => $codeParts[1],
-        ],
+        ),
         'body' => $content,
-    ];
+    );
 }
 
 function mock_wp_remote_post($url, $args)
@@ -74,12 +74,12 @@ function real_wp_remote_get($url, $args = null)
     $content = @file_get_contents($url);
     $codeParts = explode(' ', $http_response_header[0]);
 
-    return [
-        'response' => [
+    return array(
+        'response' => array(
             'code' => $codeParts[1],
-        ],
+        ),
         'body' => $content,
-    ];
+    );
 }
 
 function mock_wp_remote_get($url, $args = null)
