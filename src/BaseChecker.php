@@ -134,10 +134,21 @@ class BaseChecker
         foreach ($original->checksums as $key => $originalFile) {
             if (isset($local->checksums[$key])) {
                 if ($originalFile->hash != $local->checksums[$key]->hash) {
-                    $change = $originalFile;
-                    $change->status = 'MODIFIED';
-	                $change->isSoft = $this->isSoftChange($key, $change->status);
-                    $changeSet[$key] = $change;
+                    $altMatch = false;
+                    if (isset($originalFile->alt)) {
+                        foreach ($originalFile->alt as $altChecksum) {
+                            if ($altChecksum->hash == $local->checksums[$key]->hash) {
+                                $altMatch = true;
+                            }
+                        }
+                    }
+
+                    if (!$altMatch) {
+                        $change = $originalFile;
+                        $change->status = 'MODIFIED';
+                        $change->isSoft = $this->isSoftChange($key, $change->status);
+                        $changeSet[$key] = $change;
+                    }
                 }
             } else {
                 $change = $originalFile;
