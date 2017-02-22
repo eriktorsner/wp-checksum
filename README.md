@@ -1,6 +1,8 @@
-[![Build Status](https://travis-ci.org/eriktorsner/wp-checksum.svg?branch=master)](https://travis-ci.org/eriktorsner/wp-checksum)
-
 # wp-checksum
+
+[![Build Status](https://travis-ci.org/eriktorsner/wp-checksum.svg?branch=master)](https://travis-ci.org/eriktorsner/wp-checksum)
+[![codecov](https://codecov.io/gh/eriktorsner/wp-checksum/branch/master/graph/badge.svg)](https://codecov.io/gh/eriktorsner/wp-checksum)
+
 
 Wp-cli sub command for verifying checksum data for themes and plugins. It checks the md5 sum of all files inside each plugin and theme and compares against what the same plugin/theme looks like on the WordPress repo. The core wp-cli command has this functionality for core, this sub command brings the same for plugins and themes.
 
