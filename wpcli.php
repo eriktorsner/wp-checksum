@@ -1,6 +1,10 @@
 <?php
 require_once __DIR__ . '/ParametersProvider.php';
 
+if(!defined('WP_CHECKSUM_VERSION')) {
+    define('WP_CHECKSUM_VERSION', '0.3.0');
+}
+
 if (defined('WP_CLI') && class_exists('WP_CLI', false)) {
     WP_CLI::add_command('checksum all', array('WPChecksum\Checksum', 'checkAll'));
     WP_CLI::add_command('checksum plugin', array('WPChecksum\Checksum', 'checkPlugin'));
