@@ -31,7 +31,7 @@ Read more about how the api and hourly rate limits work in the section "Backend 
 ### Globally, as a wp-cli package
 
 ```bash
-wp package install wp-checksum
+wp package install eriktorsner/wp-checksum
 ```
 
 ### Via composer
